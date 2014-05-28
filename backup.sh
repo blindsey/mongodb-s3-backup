@@ -18,8 +18,6 @@ This script dumps the current mongo database, tars it, then sends it to an Amazo
 
 OPTIONS:
    -h      Show this message
-   -u      Mongodb user
-   -p      Mongodb password
    -k      AWS Access Key
    -s      AWS Secret Key
    -r      Amazon S3 region
@@ -27,8 +25,6 @@ OPTIONS:
 EOF
 }
 
-MONGODB_USER=
-MONGODB_PASSWORD=
 AWS_ACCESS_KEY=
 AWS_SECRET_KEY=
 S3_REGION=
@@ -40,12 +36,6 @@ do
     h)
       usage
       exit 1
-      ;;
-    u)
-      MONGODB_USER=$OPTARG
-      ;;
-    p)
-      MONGODB_PASSWORD=$OPTARG
       ;;
     k)
       AWS_ACCESS_KEY=$OPTARG
@@ -66,7 +56,7 @@ do
   esac
 done
 
-if [[ -z $MONGODB_USER ]] || [[ -z $MONGODB_PASSWORD ]] || [[ -z $AWS_ACCESS_KEY ]] || [[ -z $AWS_SECRET_KEY ]] || [[ -z $S3_REGION ]] || [[ -z $S3_BUCKET ]]
+if [[ -z $AWS_ACCESS_KEY ]] || [[ -z $AWS_SECRET_KEY ]] || [[ -z $S3_REGION ]] || [[ -z $S3_BUCKET ]]
 then
   usage
   exit 1
@@ -81,14 +71,13 @@ FILE_NAME="backup-$DATE"
 ARCHIVE_NAME="$FILE_NAME.tar.gz"
 
 # Lock the database
-# Note there is a bug in mongo 2.2.0 where you must touch all the databases before you run mongodump
-mongo -username "$MONGODB_USER" -password "$MONGODB_PASSWORD" admin --eval "var databaseNames = db.getMongo().getDBNames(); for (var i in databaseNames) { printjson(db.getSiblingDB(databaseNames[i]).getCollectionNames()) }; printjson(db.fsyncLock());"
+mongo admin --eval "printjson(db.fsyncLock());"
 
 # Dump the database
-mongodump -username "$MONGODB_USER" -password "$MONGODB_PASSWORD" --out $DIR/backup/$FILE_NAME
+mongodump --out $DIR/backup/$FILE_NAME
 
 # Unlock the database
-mongo -username "$MONGODB_USER" -password "$MONGODB_PASSWORD" admin --eval "printjson(db.fsyncUnlock());"
+mongo admin --eval "printjson(db.fsyncUnlock());"
 
 # Tar Gzip the file
 tar -C $DIR/backup/ -zcvf $DIR/backup/$ARCHIVE_NAME $FILE_NAME/
