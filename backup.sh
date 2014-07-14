@@ -71,13 +71,13 @@ FILE_NAME="backup-$DATE"
 ARCHIVE_NAME="$FILE_NAME.tar.gz"
 
 # Lock the database
-mongo admin --eval "printjson(db.fsyncLock());"
+# mongo admin --eval "printjson(db.fsyncLock());"
 
 # Dump the database
 mongodump --out $DIR/backup/$FILE_NAME
 
 # Unlock the database
-mongo admin --eval "printjson(db.fsyncUnlock());"
+# mongo admin --eval "printjson(db.fsyncUnlock());"
 
 # Tar Gzip the file
 tar -C $DIR/backup/ -zcvf $DIR/backup/$ARCHIVE_NAME $FILE_NAME/
